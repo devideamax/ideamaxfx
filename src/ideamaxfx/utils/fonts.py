@@ -1,4 +1,4 @@
-"""Font loading with system fallbacks."""
+"""Font loading with bundled font and system fallbacks."""
 
 from __future__ import annotations
 
@@ -6,6 +6,10 @@ import os
 import sys
 
 from PIL import ImageFont
+
+_BUNDLED_FONT = os.path.join(
+    os.path.dirname(os.path.dirname(__file__)), "assets", "DejaVuSans.ttf"
+)
 
 _FALLBACK_NAMES = [
     "DejaVuSans.ttf",
@@ -47,7 +51,7 @@ def _find_system_font() -> str | None:
 def load_font(
     size: int = 20, path: str | None = None
 ) -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
-    """Load a TrueType font with fallback to system fonts.
+    """Load a TrueType font with fallback to bundled and system fonts.
 
     Args:
         size: Font size in pixels.
@@ -58,6 +62,10 @@ def load_font(
     """
     if path and os.path.isfile(path):
         return ImageFont.truetype(path, size)
+
+    # Try bundled font first
+    if os.path.isfile(_BUNDLED_FONT):
+        return ImageFont.truetype(_BUNDLED_FONT, size)
 
     system_font = _find_system_font()
     if system_font:

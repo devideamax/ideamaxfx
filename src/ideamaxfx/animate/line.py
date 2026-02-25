@@ -6,9 +6,20 @@ from typing import Callable
 
 from PIL import Image, ImageDraw
 
+from ideamaxfx.animate.chart_utils import (
+    _SS,
+    compute_margins,
+    compute_nice_ticks,
+    draw_gridlines,
+    draw_legend,
+    draw_title,
+    draw_x_axis,
+    draw_y_axis,
+    finalize_frame,
+    format_number,
+    parse_colors,
+)
 from ideamaxfx.animate.core import generate_frames
-from ideamaxfx.color.convert import hex_to_rgb
-from ideamaxfx.utils.fonts import load_font
 
 
 def line_draw(
@@ -26,7 +37,15 @@ def line_draw(
     hold_seconds: float = 2.0,
     easing: str | Callable[[float], float] = "ease_out_cubic",
     title: str = "",
+    subtitle: str = "",
     font_path: str | None = None,
+    show_gridlines: bool = True,
+    show_points: bool = True,
+    point_radius: int | None = None,
+    show_legend: bool = True,
+    x_label: str = "",
+    y_label: str = "",
+    sharpen: bool = True,
 ) -> list[Image.Image]:
     """Generate animated line chart frames with progressive drawing.
 
@@ -45,7 +64,15 @@ def line_draw(
         hold_seconds: Hold final frame.
         easing: Easing function name or callable.
         title: Optional chart title.
+        subtitle: Optional subtitle.
         font_path: Optional font path.
+        show_gridlines: Draw horizontal gridlines.
+        show_points: Draw data points.
+        point_radius: Point radius (None = auto).
+        show_legend: Show legend when multiple series with labels.
+        x_label: X-axis label.
+        y_label: Y-axis label.
+        sharpen: Apply UnsharpMask after downscale.
 
     Returns:
         List of PIL Image frames.
@@ -63,73 +90,102 @@ def line_draw(
     n_series = len(series)
     n_points = len(x_values)
 
-    default_palette = [
-        (0, 245, 212),
-        (212, 33, 61),
-        (0, 86, 160),
-        (255, 165, 0),
-        (148, 103, 189),
-        (50, 205, 50),
-    ]
-    parsed_colors: list[tuple[int, int, int]] = []
-    if colors:
-        for c in colors:
-            parsed_colors.append(hex_to_rgb(c) if isinstance(c, str) else c)
-    else:
-        parsed_colors = [default_palette[i % len(default_palette)] for i in range(n_series)]
+    parsed_colors = parse_colors(colors, n_series)
 
-    margin = {"left": 60, "right": 30, "top": 50 if title else 25, "bottom": 40}
-    chart_w = width - margin["left"] - margin["right"]
-    chart_h = height - margin["top"] - margin["bottom"]
+    S = _SS
 
+    # Data ranges
     all_y = [v for s in series for v in s]
-    y_min = min(all_y)
-    y_max = max(all_y)
-    y_range = y_max - y_min if y_max != y_min else 1.0
+    y_min_data = min(all_y)
+    y_max_data = max(all_y)
     x_min = min(x_values)
     x_max = max(x_values)
     x_range = x_max - x_min if x_max != x_min else 1.0
 
-    title_font = load_font(size=18, path=font_path)
+    # Nice ticks for Y-axis
+    y_ticks = compute_nice_ticks(y_min_data, y_max_data)
+    y_min = y_ticks[0] if y_ticks else y_min_data
+    y_max = y_ticks[-1] if y_ticks else y_max_data
+    y_range = y_max - y_min if y_max != y_min else 1.0
+
+    # X-axis labels
+    x_ticks = compute_nice_ticks(x_min, x_max, target_count=min(n_points, 8))
+    x_labels_str = [format_number(t) for t in x_ticks]
+    y_labels_str = [format_number(t) for t in y_ticks]
+
+    # Determine if legend needed
+    has_legend = show_legend and labels is not None and n_series > 1
+
+    # Compute dynamic margins
+    tmp_img = Image.new("RGB", (width * S, height * S))
+    tmp_draw = ImageDraw.Draw(tmp_img)
+    margins = compute_margins(
+        tmp_draw, y_labels_str, x_labels_str, title, subtitle, has_legend, S, font_path
+    )
+    if has_legend:
+        margins["bottom"] += 20 * S  # space for legend below
+
+    margin_left = margins["left"]
+    margin_right = margins["right"]
+    margin_top = margins["top"]
+    margin_bottom = margins["bottom"]
+    chart_w = width * S - margin_left - margin_right
+    chart_h = height * S - margin_top - margin_bottom
+
+    chart_area = {
+        "left": margin_left,
+        "top": margin_top,
+        "bottom": margin_top + chart_h,
+        "right_x": margin_left + chart_w,
+    }
+
+    # Point radius
+    pr = point_radius if point_radius is not None else max(2, line_width)
 
     def _to_pixel(xi: float, yi: float) -> tuple[int, int]:
-        px = margin["left"] + int((xi - x_min) / x_range * chart_w)
-        py = margin["top"] + chart_h - int((yi - y_min) / y_range * chart_h)
+        px = margin_left + int((xi - x_min) / x_range * chart_w)
+        py = margin_top + chart_h - int((yi - y_min) / y_range * chart_h)
         return (px, py)
 
     def render(progress: float) -> Image.Image:
-        img = Image.new("RGB", (width, height), bg_color)
+        img = Image.new("RGB", (width * S, height * S), bg_color)
         draw = ImageDraw.Draw(img)
 
-        if title:
-            bbox = draw.textbbox((0, 0), title, font=title_font)
-            tw = bbox[2] - bbox[0]
-            draw.text(((width - tw) // 2, 8), title, fill=text_color, font=title_font)
+        # Title
+        draw_title(draw, title, subtitle, width * S, 8 * S, S, font_path)
 
-        # Axes
-        base_y = margin["top"] + chart_h
-        draw.line(
-            [(margin["left"], base_y), (margin["left"] + chart_w, base_y)],
-            fill=(60, 60, 70),
-            width=1,
-        )
-        draw.line(
-            [(margin["left"], margin["top"]), (margin["left"], base_y)],
-            fill=(60, 60, 70),
-            width=1,
-        )
+        # Gridlines (behind data)
+        if show_gridlines:
+            draw_gridlines(draw, y_ticks, chart_area, y_min, y_max, S)
+
+        # Axes with numbers
+        draw_y_axis(draw, y_ticks, chart_area, y_min, y_max, S, font_path)
+
+        # X-axis
+        x_positions = [_to_pixel(t, y_min)[0] for t in x_ticks]
+        draw_x_axis(draw, x_labels_str, x_positions, chart_area, S, font_path)
 
         # Draw each series
         visible_points = max(1, int(n_points * progress))
         for si, s in enumerate(series):
             points = [_to_pixel(x_values[j], s[j]) for j in range(visible_points)]
             if len(points) >= 2:
-                draw.line(points, fill=parsed_colors[si], width=line_width)
-            for p in points:
-                r = line_width + 1
-                draw.ellipse([p[0] - r, p[1] - r, p[0] + r, p[1] + r], fill=parsed_colors[si])
+                draw.line(points, fill=parsed_colors[si], width=line_width * S)
+            if show_points:
+                for p in points:
+                    r = pr * S
+                    draw.ellipse(
+                        [p[0] - r, p[1] - r, p[0] + r, p[1] + r],
+                        fill=parsed_colors[si],
+                    )
 
-        return img
+        # Legend
+        if has_legend and labels:
+            draw_legend(
+                draw, labels, parsed_colors, chart_area, width * S, S, font_path
+            )
+
+        return finalize_frame(img, width, height, sharpen=sharpen)
 
     return generate_frames(
         render, fps=fps, duration=duration, hold_seconds=hold_seconds, easing=easing

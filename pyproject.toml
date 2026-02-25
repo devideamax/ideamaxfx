@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ideamaxfx"
-version = "0.1.0"
+version = "0.1.1"
 description = "Post-production effects, animated build-up, and visual toolkit for data visualizations"
 readme = "README.md"
 license = {text = "MIT"}
@@ -34,7 +34,8 @@ dependencies = [
 
 [project.optional-dependencies]
 matplotlib = ["matplotlib>=3.7"]
-full = ["matplotlib>=3.7", "scipy>=1.10"]
+video = ["imageio-ffmpeg>=0.4.9"]
+full = ["matplotlib>=3.7", "scipy>=1.10", "imageio-ffmpeg>=0.4.9"]
 dev = ["pytest>=7.0", "pytest-cov", "ruff", "mypy"]
 
 [project.urls]
@@ -45,6 +46,9 @@ Changelog = "https://github.com/devideamax/ideamaxfx/blob/main/CHANGELOG.md"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+ideamaxfx = ["assets/*.ttf"]
 
 [tool.ruff]
 line-length = 100

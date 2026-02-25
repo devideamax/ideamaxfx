@@ -6,8 +6,18 @@ from typing import Callable
 
 from PIL import Image, ImageDraw
 
+from ideamaxfx.animate.chart_utils import (
+    _SS,
+    compute_margins,
+    compute_nice_ticks,
+    draw_gridlines,
+    draw_title,
+    draw_x_axis,
+    draw_y_axis,
+    finalize_frame,
+    format_number,
+)
 from ideamaxfx.animate.core import generate_frames
-from ideamaxfx.utils.fonts import load_font
 
 
 def scatter_fade(
@@ -24,7 +34,13 @@ def scatter_fade(
     hold_seconds: float = 2.0,
     easing: str | Callable[[float], float] = "ease_out_cubic",
     title: str = "",
+    subtitle: str = "",
     font_path: str | None = None,
+    show_gridlines: bool = True,
+    show_legend: bool = True,
+    x_label: str = "",
+    y_label: str = "",
+    sharpen: bool = True,
 ) -> list[Image.Image]:
     """Generate animated scatter plot with points fading in.
 
@@ -42,50 +58,81 @@ def scatter_fade(
         hold_seconds: Hold final frame.
         easing: Easing function name or callable.
         title: Optional chart title.
+        subtitle: Optional subtitle.
         font_path: Optional font path.
+        show_gridlines: Draw horizontal gridlines.
+        show_legend: Show legend (reserved for future multi-group support).
+        x_label: X-axis label.
+        y_label: Y-axis label.
+        sharpen: Apply UnsharpMask after downscale.
 
     Returns:
         List of PIL Image frames.
     """
     n = len(x_values)
     if sizes is None:
-        sizes = [6.0] * n
+        sizes = [4.0] * n
 
-    margin = {"left": 50, "right": 30, "top": 45 if title else 20, "bottom": 35}
-    chart_w = width - margin["left"] - margin["right"]
-    chart_h = height - margin["top"] - margin["bottom"]
+    S = _SS
 
-    x_min, x_max = min(x_values), max(x_values)
-    y_min, y_max = min(y_values), max(y_values)
+    # Data ranges
+    x_min_data, x_max_data = min(x_values), max(x_values)
+    y_min_data, y_max_data = min(y_values), max(y_values)
+
+    # Nice ticks
+    y_ticks = compute_nice_ticks(y_min_data, y_max_data)
+    x_ticks = compute_nice_ticks(x_min_data, x_max_data, target_count=min(n, 8))
+    y_min = y_ticks[0] if y_ticks else y_min_data
+    y_max = y_ticks[-1] if y_ticks else y_max_data
+    x_min = x_ticks[0] if x_ticks else x_min_data
+    x_max = x_ticks[-1] if x_ticks else x_max_data
     x_range = x_max - x_min if x_max != x_min else 1.0
     y_range = y_max - y_min if y_max != y_min else 1.0
 
-    title_font = load_font(size=18, path=font_path)
+    x_labels_str = [format_number(t) for t in x_ticks]
+    y_labels_str = [format_number(t) for t in y_ticks]
+
+    # Dynamic margins
+    tmp_img = Image.new("RGB", (width * S, height * S))
+    tmp_draw = ImageDraw.Draw(tmp_img)
+    margins = compute_margins(
+        tmp_draw, y_labels_str, x_labels_str, title, subtitle, False, S, font_path
+    )
+
+    margin_left = margins["left"]
+    margin_right = margins["right"]
+    margin_top = margins["top"]
+    margin_bottom = margins["bottom"]
+    chart_w = width * S - margin_left - margin_right
+    chart_h = height * S - margin_top - margin_bottom
+
+    chart_area = {
+        "left": margin_left,
+        "top": margin_top,
+        "bottom": margin_top + chart_h,
+        "right_x": margin_left + chart_w,
+    }
 
     def _to_pixel(xi: float, yi: float) -> tuple[int, int]:
-        px = margin["left"] + int((xi - x_min) / x_range * chart_w)
-        py = margin["top"] + chart_h - int((yi - y_min) / y_range * chart_h)
+        px = margin_left + int((xi - x_min) / x_range * chart_w)
+        py = margin_top + chart_h - int((yi - y_min) / y_range * chart_h)
         return (px, py)
 
     def render(progress: float) -> Image.Image:
-        img = Image.new("RGBA", (width, height), (*bg_color, 255))
+        img = Image.new("RGBA", (width * S, height * S), (*bg_color, 255))
         draw = ImageDraw.Draw(img)
 
-        if title:
-            bbox = draw.textbbox((0, 0), title, font=title_font)
-            tw = bbox[2] - bbox[0]
-            draw.text(((width - tw) // 2, 8), title, fill=text_color, font=title_font)
+        # Title
+        draw_title(draw, title, subtitle, width * S, 8 * S, S, font_path)
 
-        # Axes
-        base_y = margin["top"] + chart_h
-        draw.line(
-            [(margin["left"], base_y), (margin["left"] + chart_w, base_y)],
-            fill=(60, 60, 70),
-            width=1,
-        )
-        draw.line(
-            [(margin["left"], margin["top"]), (margin["left"], base_y)], fill=(60, 60, 70), width=1
-        )
+        # Gridlines (behind points)
+        if show_gridlines:
+            draw_gridlines(draw, y_ticks, chart_area, y_min, y_max, S)
+
+        # Axes with numbers
+        draw_y_axis(draw, y_ticks, chart_area, y_min, y_max, S, font_path)
+        x_positions = [_to_pixel(t, y_min)[0] for t in x_ticks]
+        draw_x_axis(draw, x_labels_str, x_positions, chart_area, S, font_path)
 
         # Points appear progressively
         visible = max(0, int(n * progress))
@@ -93,13 +140,13 @@ def scatter_fade(
 
         for i in range(visible):
             px, py = _to_pixel(x_values[i], y_values[i])
-            r = int(sizes[i])
+            r = int(sizes[i]) * S
             draw.ellipse(
                 [px - r, py - r, px + r, py + r],
                 fill=(*color, alpha),
             )
 
-        return img.convert("RGB")
+        return finalize_frame(img, width, height, sharpen=sharpen)
 
     return generate_frames(
         render, fps=fps, duration=duration, hold_seconds=hold_seconds, easing=easing

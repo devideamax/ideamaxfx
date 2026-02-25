@@ -29,7 +29,7 @@ from ideamaxfx.animate.network import network_build
 from ideamaxfx.animate.morph import morph
 from ideamaxfx.animate.stagger import stagger_delays
 from ideamaxfx.animate.composer import compose_animations
-from ideamaxfx.animate.export import export_gif, export_apng
+from ideamaxfx.animate.export import export_gif, export_apng, export_webp, export_mp4
 
 __all__ = [
     "linear",
@@ -61,4 +61,6 @@ __all__ = [
     "compose_animations",
     "export_gif",
     "export_apng",
+    "export_webp",
+    "export_mp4",
 ]

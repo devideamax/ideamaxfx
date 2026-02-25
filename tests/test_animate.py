@@ -27,6 +27,8 @@ from ideamaxfx.animate import (
     compose_animations,
     export_gif,
     export_apng,
+    export_webp,
+    export_mp4,
 )
 
 
@@ -242,6 +244,71 @@ class TestExport:
             if os.path.exists(path):
                 os.remove(path)
 
+    def test_export_webp(self) -> None:
+        frames = [Image.new("RGB", (50, 50), (i * 25, 0, 0)) for i in range(5)]
+        with tempfile.NamedTemporaryFile(suffix=".webp", delete=False) as f:
+            path = f.name
+        try:
+            result = export_webp(frames, path, fps=5)
+            assert os.path.exists(result)
+            assert os.path.getsize(result) > 0
+        finally:
+            if os.path.exists(path):
+                os.remove(path)
+
+    def test_export_mp4_graceful(self) -> None:
+        """MP4 export either works (if ffmpeg installed) or raises ImportError."""
+        frames = [Image.new("RGB", (50, 50), (i * 25, 0, 0)) for i in range(5)]
+        with tempfile.NamedTemporaryFile(suffix=".mp4", delete=False) as f:
+            path = f.name
+        try:
+            try:
+                result = export_mp4(frames, path, fps=5)
+                assert os.path.exists(result)
+            except ImportError:
+                pass  # Expected if imageio-ffmpeg not installed
+        finally:
+            if os.path.exists(path):
+                os.remove(path)
+
     def test_export_empty_raises(self) -> None:
         with pytest.raises(ValueError):
             export_gif([], "dummy.gif")
+
+
+class TestBackwardCompatibility:
+    """Ensure all chart functions work with minimal v0.1.0 args."""
+
+    def test_bar_grow_minimal(self) -> None:
+        frames = bar_grow(labels=["A", "B"], values=[10, 20], fps=5, duration=0.2, hold_seconds=0.1)
+        assert frames[0].size == (800, 500)
+
+    def test_line_draw_minimal(self) -> None:
+        frames = line_draw(x_values=[1, 2, 3], y_values=[10, 20, 15], fps=5, duration=0.2, hold_seconds=0.1)
+        assert frames[0].size == (800, 500)
+
+    def test_scatter_fade_minimal(self) -> None:
+        frames = scatter_fade(x_values=[1, 2, 3], y_values=[5, 3, 8], fps=5, duration=0.2, hold_seconds=0.1)
+        assert frames[0].size == (800, 500)
+
+    def test_radar_sweep_minimal(self) -> None:
+        frames = radar_sweep(categories=["A", "B", "C", "D"], values=[80, 60, 90, 70], fps=5, duration=0.2, hold_seconds=0.1)
+        assert frames[0].size == (500, 500)
+
+    def test_pie_fill_minimal(self) -> None:
+        frames = pie_fill(labels=["A", "B", "C"], values=[30, 50, 20], fps=5, duration=0.2, hold_seconds=0.1)
+        assert frames[0].size == (500, 500)
+
+    def test_counter_roll_minimal(self) -> None:
+        frames = counter_roll(start=0, end=100, fps=5, duration=0.2, hold_seconds=0.1)
+        assert frames[0].size == (400, 200)
+
+    def test_heatmap_reveal_minimal(self) -> None:
+        frames = heatmap_reveal(data=[[10, 20], [30, 40]], fps=5, duration=0.2, hold_seconds=0.1)
+        assert frames[0].size == (600, 500)
+
+    def test_network_build_minimal(self) -> None:
+        nodes = [("A", 0.2, 0.3), ("B", 0.8, 0.3)]
+        edges = [(0, 1, 1.0)]
+        frames = network_build(nodes=nodes, edges=edges, fps=5, duration=0.3, hold_seconds=0.1)
+        assert frames[0].size == (600, 500)

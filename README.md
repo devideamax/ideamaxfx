@@ -5,7 +5,7 @@
 [![PyPI version](https://img.shields.io/pypi/v/ideamaxfx)](https://pypi.org/project/ideamaxfx/)
 [![Python 3.9+](https://img.shields.io/badge/python-3.9%2B-blue)](https://www.python.org/downloads/)
 [![MIT License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-341%20passed-brightgreen)]()
+[![Tests](https://img.shields.io/badge/tests-376%20passed-brightgreen)]()
 [![Coverage](https://img.shields.io/badge/coverage-91%25-brightgreen)]()
 [![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-000000)](https://github.com/astral-sh/ruff)
 
@@ -15,7 +15,7 @@
 
 - **Post-Production Effects Pipeline** -- Chainable API for cinematic finishing: grain, glow, scanlines, vignette, chromatic aberration, bloom, halftone, duotone, glass card, pattern overlays, and blend modes. Every method returns `self` so you can build complex multi-effect stacks in a single expression.
 
-- **Animated Chart Build-Up** -- Generate GIF/APNG sequences where chart elements appear progressively with easing: bar, line, radar, scatter, pie, counter, heatmap, network, and morph transitions. Ships with 15 built-in easing functions and automatic GIF size optimization via gifsicle.
+- **Animated Chart Build-Up** -- Generate GIF/APNG/WebP/MP4 sequences where chart elements appear progressively with easing: bar, line, radar, scatter, pie, counter, heatmap, network, and morph transitions. Every chart renders with Y/X axes, gridlines, formatted numbers, legends, and title/subtitle support. Ships with 15 built-in easing functions, D3 Category10 palette, and 2x supersampling with UnsharpMask sharpening.
 
 - **Visual Toolkit** -- Text effects (neon, gradient, outline, shadow, emboss), layout components (stat cards, progress bars, badges), color utilities, image composition, texture generators, and watermark tools. Pure Pillow core with optional matplotlib/scipy for advanced use cases.
 
@@ -27,10 +27,11 @@
 pip install ideamaxfx
 ```
 
-Include optional dependencies for chart rendering and advanced interpolation:
+Optional extras:
 
 ```bash
-pip install ideamaxfx[full]   # includes matplotlib + scipy
+pip install ideamaxfx[video]  # MP4 export (imageio-ffmpeg)
+pip install ideamaxfx[full]   # everything: matplotlib + scipy + video
 ```
 
 ---
@@ -55,15 +56,19 @@ result = (EffectsPipeline(img)
 ### Animated Bar Chart
 
 ```python
-from ideamaxfx.animate import bar_grow, export_gif
+from ideamaxfx.animate import bar_grow, export_gif, export_webp
 
 frames = bar_grow(
-    labels=['Goals', 'Assists', 'Saves'],
-    values=[68, 72, 45],
-    colors=['#d4213d', '#006633', '#0056a0'],
+    labels=['Revenue', 'Costs', 'Profit'],
+    values=[1_500_000, 850_000, 650_000],
+    title='Q4 Financial Summary',
+    subtitle='All values in USD',
+    show_gridlines=True,
+    show_values=True,
     easing='ease_out_elastic'
 )
-export_gif(frames, 'animated.gif', max_kb=500)
+export_gif(frames, 'chart.gif')
+export_webp(frames, 'chart.webp', quality=85)  # 24-bit color, ~66% smaller
 ```
 
 ### Text Effects
@@ -83,7 +88,7 @@ img = neon_text(canvas, 20, 20, "ELITE", font=font, color=(0, 245, 212))
 | Module | Description | Key Functions |
 |--------|-------------|---------------|
 | `effects` | Post-production effects | `grain`, `glow`, `glow_border`, `halftone`, `scanlines`, `glass_card`, `duotone`, `vignette`, `chromatic_aberration`, `bloom`, `blue_noise`, `pattern_overlay`, `blend`, `EffectsPipeline` |
-| `animate` | Animated build-up | `bar_grow`, `line_draw`, `radar_sweep`, `scatter_fade`, `counter_roll`, `pie_fill`, `heatmap_reveal`, `network_build`, `morph`, `stagger_delays`, `compose_animations`, `export_gif`, `export_apng` |
+| `animate` | Animated build-up | `bar_grow`, `line_draw`, `radar_sweep`, `scatter_fade`, `counter_roll`, `pie_fill`, `heatmap_reveal`, `network_build`, `morph`, `stagger_delays`, `compose_animations`, `export_gif`, `export_apng`, `export_webp`, `export_mp4` |
 | `text` | Text effects | `gradient_text`, `neon_text`, `outline_text`, `shadow_text`, `emboss_text` |
 | `color` | Color utilities | `hex_to_rgb`, `rgb_to_hex`, `rgb_to_hsl`, `hsl_to_rgb`, `interpolate_colors`, `complementary`, `triadic`, `analogous`, `extract_palette`, `contrast_ratio`, `wcag_check` |
 | `layout` | UI components | `stat_card`, `progress_bar`, `badge`, `legend_block`, `divider`, `callout` |
@@ -135,16 +140,22 @@ result = (EffectsPipeline(Image.open("input.png"))
 
 ## Animation Export
 
-The `animate` module produces a list of PIL `Image` frames. Use `export_gif` or `export_apng` to save them.
+The `animate` module produces a list of PIL `Image` frames. Four export formats are available:
+
+| Format | Function | Colors | Size | Dependencies |
+|--------|----------|--------|------|--------------|
+| **GIF** | `export_gif` | 256 max | Large | None |
+| **APNG** | `export_apng` | Full 24-bit | Medium | None |
+| **WebP** | `export_webp` | Full 24-bit | Small (~66% of GIF) | None |
+| **MP4** | `export_mp4` | Full 24-bit | Smallest | `imageio-ffmpeg` |
 
 ```python
-from ideamaxfx.animate import export_gif, export_apng
+from ideamaxfx.animate import export_gif, export_apng, export_webp, export_mp4
 
-# GIF with automatic optimization
-export_gif(frames, "output.gif", fps=15, max_colors=128, max_kb=500)
-
-# Lossless APNG
-export_apng(frames, "output.png", fps=15)
+export_gif(frames, "output.gif", fps=15)         # universal compatibility
+export_apng(frames, "output.png", fps=15)         # lossless, modern browsers
+export_webp(frames, "output.webp", quality=85)    # best web balance
+export_mp4(frames, "output.mp4", fps=15)          # video platforms
 ```
 
 **`export_gif` parameters:**
@@ -154,12 +165,34 @@ export_apng(frames, "output.png", fps=15)
 | `frames` | `list[Image]` | required | PIL Image frame sequence |
 | `output_path` | `str` | required | Destination file path |
 | `fps` | `int` | `15` | Frames per second |
-| `max_colors` | `int` | `128` | Maximum palette colors |
-| `max_kb` | `int` | `500` | Target max file size in KB |
-| `lossy` | `int` | `40` | gifsicle lossy level (0-200) |
+| `max_colors` | `int` | `256` | Maximum palette colors |
+| `max_kb` | `int` | `2000` | Target max file size in KB |
+| `lossy` | `int` | `0` | gifsicle lossy level (0-200) |
 | `optimize` | `bool` | `True` | Use gifsicle if available |
 
 When gifsicle is installed, `export_gif` runs a two-pass optimization: first at the requested settings, then a more aggressive pass if the file exceeds `max_kb`. Without gifsicle it falls back to Pillow's built-in GIF writer with adaptive palette quantization.
+
+**`export_webp` parameters:**
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `frames` | `list[Image]` | required | PIL Image frame sequence |
+| `output_path` | `str` | required | Destination file path |
+| `fps` | `int` | `15` | Frames per second |
+| `quality` | `int` | `80` | WebP quality (1-100) |
+| `lossless` | `bool` | `False` | Use lossless compression |
+
+**`export_mp4` parameters:**
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `frames` | `list[Image]` | required | PIL Image frame sequence |
+| `output_path` | `str` | required | Destination file path |
+| `fps` | `int` | `15` | Frames per second |
+| `codec` | `str` | `"libx264"` | Video codec |
+| `quality` | `int` | `23` | CRF value (lower = better, 0-51) |
+
+MP4 export requires `imageio-ffmpeg`. Install with `pip install ideamaxfx[video]`.
 
 **`export_apng` parameters:**
 
@@ -208,6 +241,51 @@ from ideamaxfx.animate import get_easing
 
 fn = get_easing("ease_out_elastic")
 value = fn(0.5)  # returns eased float in 0.0-1.0
+```
+
+---
+
+## Chart Parameters (v0.1.1)
+
+All chart functions (`bar_grow`, `line_draw`, `scatter_fade`, `radar_sweep`, `pie_fill`, `counter_roll`, `heatmap_reveal`, `network_build`) share common new parameters. All are optional with sensible defaults — existing code works without changes.
+
+| Parameter | Available on | Default | Description |
+|-----------|-------------|---------|-------------|
+| `subtitle` | all | `""` | Subtitle below the title |
+| `show_gridlines` | bar, line, scatter | `True` | Horizontal gridlines at tick positions |
+| `show_values` | bar, heatmap | `True` | Value labels on chart elements |
+| `value_format` | bar | `"auto"` | `"auto"`, `"raw"`, `"K"`, `"M"`, `"comma"` |
+| `show_legend` | line, scatter, pie | `True` | Color legend for multi-series data |
+| `legend_position` | pie | `"right"` | `"right"` or `"bottom"` |
+| `show_percentages` | pie | `True` | Percentage labels on sectors |
+| `label_style` | pie | `"fade"` | `"fade"` (gradual) or `"pop"` (instant at 80%) |
+| `show_points` | line | `True` | Data point dots |
+| `point_radius` | line | `None` | Point size (None = auto) |
+| `x_label`, `y_label` | line, scatter | `""` | Axis labels |
+| `show_ring_values` | radar | `True` | Numbers on grid rings |
+| `ring_count` | radar | `4` | Number of concentric rings |
+| `grid_color` | radar | `(68,68,68)` | Grid line color |
+| `show_color_bar` | heatmap | `True` | Vertical gradient min→max legend |
+| `show_edge_weights` | network | `False` | Weight labels at edge midpoints |
+| `thousands_separator` | counter | `","` | Thousand separator (`","` → `1,500,000`) |
+| `sharpen` | all | `True` | UnsharpMask after LANCZOS downscale |
+
+### Example: line chart with all features
+
+```python
+from ideamaxfx.animate import line_draw, export_webp
+
+frames = line_draw(
+    x_values=[1, 2, 3, 4, 5, 6],
+    y_values=[[10, 25, 18, 30, 22, 35], [5, 15, 12, 20, 18, 28]],
+    labels=['Series A', 'Series B'],
+    title='Monthly Trends',
+    subtitle='Jan-Jun 2026',
+    show_gridlines=True,
+    show_legend=True,
+    show_points=True,
+)
+export_webp(frames, 'trends.webp', quality=85)
 ```
 
 ---
@@ -264,10 +342,11 @@ passes = wcag_check((255, 255, 255), rgb)       # AA/AAA compliance dict
 
 **Optional** (install via `pip install ideamaxfx[full]`):
 
-| Package | Version | Purpose |
-|---------|---------|---------|
-| matplotlib | >= 3.7 | Chart rendering backends |
-| scipy | >= 1.10 | Advanced interpolation and filters |
+| Package | Version | Purpose | Extra |
+|---------|---------|---------|-------|
+| matplotlib | >= 3.7 | Chart rendering backends | `[full]` |
+| scipy | >= 1.10 | Advanced interpolation and filters | `[full]` |
+| imageio-ffmpeg | >= 0.4.9 | MP4 video export | `[video]`, `[full]` |
 
 **Optional system tool:**
 
