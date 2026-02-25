@@ -2,10 +2,10 @@
 
 **Post-production effects, animated chart build-up, and visual toolkit for Python.**
 
-[![PyPI version](https://img.shields.io/pypi/v/ideamaxfx)](https://pypi.org/project/ideamaxfx/)
 [![Python 3.9+](https://img.shields.io/badge/python-3.9%2B-blue)](https://www.python.org/downloads/)
 [![MIT License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-passing-brightgreen)]()
+[![Tests](https://img.shields.io/badge/tests-341%20passed-brightgreen)]()
+[![Coverage](https://img.shields.io/badge/coverage-91%25-brightgreen)]()
 [![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-000000)](https://github.com/astral-sh/ruff)
 
 ---
@@ -316,7 +316,5 @@ See [LICENSE](LICENSE) for the full text.
 
 ## Links
 
-- **Documentation:** [ideamaxfx.readthedocs.io](https://ideamaxfx.readthedocs.io)
-- **PyPI:** [pypi.org/project/ideamaxfx](https://pypi.org/project/ideamaxfx/)
 - **GitHub:** [github.com/devideamax/ideamaxfx](https://github.com/devideamax/ideamaxfx)
-- **Changelog:** [CHANGELOG.md](https://github.com/devideamax/ideamaxfx/blob/main/CHANGELOG.md)
+- **Changelog:** [CHANGELOG.md](./CHANGELOG.md)
