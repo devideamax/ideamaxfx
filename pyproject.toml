@@ -43,6 +43,8 @@ Homepage = "https://github.com/devideamax/ideamaxfx"
 Documentation = "https://ideamaxfx.readthedocs.io"
 Repository = "https://github.com/devideamax/ideamaxfx"
 Changelog = "https://github.com/devideamax/ideamaxfx/blob/main/CHANGELOG.md"
+Company = "https://ideamax.eu"
+Author = "https://biko.bg"
 
 [tool.setuptools.packages.find]
 where = ["src"]

@@ -388,7 +388,7 @@ mypy src/
 
 ## License
 
-MIT License. Copyright (c) 2026 IDEAMAX.
+MIT License. Copyright (c) 2026 [IDEAMAX](https://ideamax.eu).
 
 See [LICENSE](LICENSE) for the full text.
 
@@ -399,3 +399,5 @@ See [LICENSE](LICENSE) for the full text.
 - **PyPI:** [pypi.org/project/ideamaxfx](https://pypi.org/project/ideamaxfx/)
 - **GitHub:** [github.com/devideamax/ideamaxfx](https://github.com/devideamax/ideamaxfx)
 - **Changelog:** [CHANGELOG.md](./CHANGELOG.md)
+- **Company:** [ideamax.eu](https://ideamax.eu) — Web Development & SEO
+- **Author:** [biko.bg](https://biko.bg)
