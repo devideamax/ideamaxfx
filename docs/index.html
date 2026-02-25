@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ideamaxfx — Python Library Documentation</title>
+    <style>
+        :root {
+            --bg: #0d1117;
+            --surface: #161b22;
+            --border: #30363d;
+            --text: #c9d1d9;
+            --text-bright: #f0f6fc;
+            --text-muted: #8b949e;
+            --accent: #58a6ff;
+            --accent-hover: #79b8ff;
+            --green: #3fb950;
+            --orange: #d29922;
+            --red: #f85149;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', -apple-system, sans-serif; background: var(--bg); color: var(--text); line-height: 1.7; }
+
+        /* ═══ SIDEBAR NAVIGATOR ═══ */
+        .sidebar {
+            position: fixed;
+            top: 0; left: 0;
+            width: 270px;
+            height: 100vh;
+            background: var(--surface);
+            border-right: 1px solid var(--border);
+            overflow-y: auto;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+        }
+        .sidebar-header {
+            padding: 24px 20px 18px;
+            border-bottom: 1px solid var(--border);
+        }
+        .sidebar-header h2 {
+            color: var(--accent);
+            font-size: 1.25em;
+            letter-spacing: -0.3px;
+        }
+        .sidebar-header .version {
+            color: var(--text-muted);
+            font-size: 0.78em;
+            margin-top: 2px;
+        }
+        .sidebar-header .tag {
+            display: inline-block;
+            background: #238636;
+            color: #fff;
+            font-size: 0.65em;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-weight: 600;
+            margin-top: 6px;
+        }
+        .nav-body { flex: 1; padding: 12px 0; overflow-y: auto; }
+        .nav-group { margin-bottom: 6px; }
+        .nav-group-title {
+            color: var(--text-muted);
+            font-size: 0.7em;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            padding: 10px 20px 4px;
+            font-weight: 700;
+        }
+        .nav-link {
+            display: block;
+            color: var(--text);
+            text-decoration: none;
+            padding: 5px 20px;
+            font-size: 0.88em;
+            border-left: 3px solid transparent;
+            transition: all 0.12s;
+        }
+        .nav-link:hover {
+            background: rgba(88,166,255,0.06);
+            color: var(--accent);
+            border-left-color: var(--accent);
+        }
+        .nav-link.active {
+            background: rgba(88,166,255,0.1);
+            color: var(--accent);
+            border-left-color: var(--accent);
+            font-weight: 600;
+        }
+        .nav-link.sub {
+            padding-left: 36px;
+            font-size: 0.82em;
+            color: var(--text-muted);
+        }
+        .nav-link.sub:hover { color: var(--text); }
+        .sidebar-footer {
+            padding: 14px 20px;
+            border-top: 1px solid var(--border);
+            font-size: 0.72em;
+            color: var(--text-muted);
+        }
+
+        /* ═══ MAIN CONTENT ═══ */
+        .main {
+            margin-left: 270px;
+            padding: 48px 64px 80px;
+            max-width: 920px;
+        }
+        h1 {
+            color: var(--text-bright);
+            font-size: 2.4em;
+            letter-spacing: -0.5px;
+            margin-bottom: 8px;
+        }
+        h2 {
+            color: var(--text-bright);
+            font-size: 1.55em;
+            margin: 48px 0 16px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+        h3 {
+            color: #e6edf3;
+            font-size: 1.15em;
+            margin: 28px 0 10px;
+        }
+        p { margin-bottom: 14px; }
+        ul, ol { margin: 10px 0 14px 24px; }
+        li { margin-bottom: 4px; }
+        a { color: var(--accent); text-decoration: none; }
+        a:hover { text-decoration: underline; }
+
+        /* Badges */
+        .badges { margin: 6px 0 20px; display: flex; gap: 6px; flex-wrap: wrap; }
+        .badge {
+            display: inline-block;
+            padding: 3px 11px;
+            border-radius: 20px;
+            font-size: 0.73em;
+            font-weight: 600;
+        }
+        .b-green { background: #238636; color: #fff; }
+        .b-blue { background: #1f6feb; color: #fff; }
+        .b-orange { background: #9e6a03; color: #fff; }
+
+        /* Code */
+        pre {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 18px 22px;
+            overflow-x: auto;
+            margin: 14px 0 18px;
+            font-size: 0.88em;
+            line-height: 1.55;
+        }
+        code {
+            font-family: 'Cascadia Code', 'JetBrains Mono', 'Fira Code', Consolas, monospace;
+            color: #e6edf3;
+        }
+        p code, li code, td code {
+            background: #21262d;
+            padding: 2px 7px;
+            border-radius: 4px;
+            font-size: 0.87em;
+        }
+        .kw { color: #ff7b72; }
+        .fn { color: #d2a8ff; }
+        .str { color: #a5d6ff; }
+        .cmt { color: #8b949e; font-style: italic; }
+        .num { color: #79c0ff; }
+
+        /* Cards */
+        .cards {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+            margin: 18px 0;
+        }
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 22px;
+            transition: border-color 0.2s;
+        }
+        .card:hover { border-color: var(--accent); }
+        .card h4 { color: var(--accent); margin-bottom: 8px; font-size: 0.95em; }
+        .card p { color: var(--text-muted); font-size: 0.85em; margin: 0; }
+
+        /* Alerts */
+        .alert {
+            border-radius: 8px;
+            padding: 14px 20px;
+            margin: 16px 0;
+            border-left: 4px solid;
+            font-size: 0.92em;
+        }
+        .alert-info { background: #0d1f3c; border-color: var(--accent); }
+        .alert-tip { background: #0d2818; border-color: var(--green); }
+        .alert-warn { background: #2a1d00; border-color: var(--orange); }
+        .alert b { display: block; margin-bottom: 4px; color: var(--text-bright); }
+
+        /* Table */
+        table { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 0.92em; }
+        th, td { text-align: left; padding: 10px 14px; border: 1px solid var(--border); }
+        th { background: var(--surface); color: var(--text-bright); font-weight: 600; }
+
+        /* ═══ RESPONSIVE ═══ */
+        @media (max-width: 860px) {
+            .sidebar { width: 220px; }
+            .main { margin-left: 220px; padding: 32px 28px; }
+            .cards { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 600px) {
+            .sidebar { display: none; }
+            .main { margin-left: 0; }
+        }
+
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    </style>
+</head>
+<body>
+
+<!-- ═══════════════ SIDEBAR ═══════════════ -->
+<nav class="sidebar">
+    <div class="sidebar-header">
+        <h2>ideamaxfx</h2>
+        <div class="version">Python Library v0.1.0</div>
+        <span class="tag">OPEN SOURCE</span>
+    </div>
+
+    <div class="nav-body">
+        <div class="nav-group">
+            <div class="nav-group-title">Getting Started</div>
+            <a href="#overview" class="nav-link active">Overview</a>
+            <a href="#installation" class="nav-link">Installation</a>
+            <a href="#quickstart" class="nav-link">Quick Start</a>
+        </div>
+        <div class="nav-group">
+            <div class="nav-group-title">Core API</div>
+            <a href="#modules" class="nav-link">Modules</a>
+            <a href="#mod-core" class="nav-link sub">core</a>
+            <a href="#mod-color" class="nav-link sub">color</a>
+            <a href="#mod-transform" class="nav-link sub">transform</a>
+            <a href="#mod-io" class="nav-link sub">io</a>
+            <a href="#mod-utils" class="nav-link sub">utils</a>
+        </div>
+        <div class="nav-group">
+            <div class="nav-group-title">Examples</div>
+            <a href="#ex-basic" class="nav-link">Basic Usage</a>
+            <a href="#ex-advanced" class="nav-link">Advanced Patterns</a>
+            <a href="#ex-recipes" class="nav-link">Recipes</a>
+        </div>
+        <div class="nav-group">
+            <div class="nav-group-title">Reference</div>
+            <a href="#api-ref" class="nav-link">Full API Reference</a>
+            <a href="#config" class="nav-link">Configuration</a>
+            <a href="#changelog" class="nav-link">Changelog</a>
+        </div>
+        <div class="nav-group">
+            <div class="nav-group-title">Community</div>
+            <a href="#contributing" class="nav-link">Contributing</a>
+            <a href="#license" class="nav-link">License</a>
+        </div>
+    </div>
+
+    <div class="sidebar-footer">
+        &copy; 2026 IdeaMAX &middot; MIT License
+    </div>
+</nav>
+
+<!-- ═══════════════ MAIN ═══════════════ -->
+<div class="main">
+
+    <!-- OVERVIEW -->
+    <h1 id="overview">ideamaxfx</h1>
+    <div class="badges">
+        <span class="badge b-green">Open Source</span>
+        <span class="badge b-blue">Python 3.9+</span>
+        <span class="badge b-orange">v0.1.0-dev</span>
+    </div>
+    <p>A Python library by <strong>IdeaMAX</strong> — designed for effects processing, color manipulation, and data transformations. Lightweight, composable, and easy to extend.</p>
+
+    <div class="alert alert-info">
+        <b>Status: Early Development</b>
+        This library is under active development. API may change. Documentation will expand as modules are built.
+    </div>
+
+    <!-- INSTALLATION -->
+    <h2 id="installation">Installation</h2>
+    <h3>From PyPI (once published)</h3>
+    <pre><code>pip install ideamaxfx</code></pre>
+
+    <h3>From source</h3>
+    <pre><code>git clone https://github.com/ideamax/ideamaxfx.git
+<span class="kw">cd</span> ideamaxfx
+pip install -e .</code></pre>
+
+    <h3>Requirements</h3>
+    <ul>
+        <li>Python 3.9 or later</li>
+        <li>Dependencies listed in <code>requirements.txt</code> (auto-installed)</li>
+    </ul>
+
+    <!-- QUICK START -->
+    <h2 id="quickstart">Quick Start</h2>
+    <pre><code><span class="kw">import</span> ideamaxfx <span class="kw">as</span> fx
+
+<span class="cmt"># Load, process, export</span>
+data = fx.load(<span class="str">"input.png"</span>)
+result = fx.pipeline(data, [
+    fx.resize(width=<span class="num">800</span>),
+    fx.adjust_color(brightness=<span class="num">1.1</span>),
+    fx.sharpen(amount=<span class="num">0.5</span>),
+])
+fx.save(result, <span class="str">"output.png"</span>)</code></pre>
+
+    <div class="alert alert-tip">
+        <b>Tip</b>
+        The pipeline pattern chains operations efficiently. Each step receives the output of the previous one.
+    </div>
+
+    <!-- MODULES -->
+    <h2 id="modules">Core Modules</h2>
+    <div class="cards">
+        <div class="card" id="mod-core">
+            <h4>ideamaxfx.core</h4>
+            <p>Pipeline engine, data containers, and base classes. The backbone of the library.</p>
+        </div>
+        <div class="card" id="mod-color">
+            <h4>ideamaxfx.color</h4>
+            <p>Color spaces (RGB, HSL, HEX, CMYK), palette generation, color harmony, contrast analysis.</p>
+        </div>
+        <div class="card" id="mod-transform">
+            <h4>ideamaxfx.transform</h4>
+            <p>Geometric transforms — resize, rotate, crop, flip, warp, perspective correction.</p>
+        </div>
+        <div class="card" id="mod-io">
+            <h4>ideamaxfx.io</h4>
+            <p>Import/export in PNG, JPEG, SVG, WebP, PDF. Batch processing support.</p>
+        </div>
+        <div class="card" id="mod-utils">
+            <h4>ideamaxfx.utils</h4>
+            <p>Helper functions — validators, converters, file discovery, logging utilities.</p>
+        </div>
+    </div>
+
+    <!-- EXAMPLES -->
+    <h2 id="ex-basic">Basic Usage</h2>
+    <h3>Color conversion</h3>
+    <pre><code><span class="kw">from</span> ideamaxfx.color <span class="kw">import</span> hex_to_rgb, rgb_to_hsl
+
+rgb = hex_to_rgb(<span class="str">"#58a6ff"</span>)
+hsl = rgb_to_hsl(*rgb)
+<span class="fn">print</span>(<span class="str">f"RGB: <span class="kw">{</span>rgb<span class="kw">}</span>, HSL: <span class="kw">{</span>hsl<span class="kw">}</span>"</span>)</code></pre>
+
+    <h3>Batch processing</h3>
+    <pre><code><span class="kw">from</span> ideamaxfx.io <span class="kw">import</span> batch_process
+<span class="kw">from</span> pathlib <span class="kw">import</span> Path
+
+batch_process(
+    source=Path(<span class="str">"./images"</span>),
+    output=Path(<span class="str">"./optimized"</span>),
+    operations=[fx.resize(width=<span class="num">1200</span>), fx.compress(quality=<span class="num">85</span>)],
+    formats=[<span class="str">"webp"</span>, <span class="str">"png"</span>],
+)</code></pre>
+
+    <h2 id="ex-advanced">Advanced Patterns</h2>
+    <h3>Custom pipeline step</h3>
+    <pre><code><span class="kw">from</span> ideamaxfx.core <span class="kw">import</span> PipelineStep
+
+<span class="kw">class</span> <span class="fn">Watermark</span>(PipelineStep):
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, text, opacity=<span class="num">0.3</span>):
+        self.text = text
+        self.opacity = opacity
+
+    <span class="kw">def</span> <span class="fn">execute</span>(self, data):
+        <span class="cmt"># Your watermark logic here</span>
+        <span class="kw">return</span> data
+
+<span class="cmt"># Use in pipeline</span>
+result = fx.pipeline(img, [
+    Watermark(<span class="str">"© IdeaMAX"</span>, opacity=<span class="num">0.2</span>),
+    fx.save_as(<span class="str">"webp"</span>),
+])</code></pre>
+
+    <h2 id="ex-recipes">Recipes</h2>
+    <p>Common patterns and solutions — will be populated with real-world use cases as the library develops.</p>
+
+    <div class="alert alert-warn">
+        <b>Coming Soon</b>
+        Detailed recipes with full working code examples will be added after the core API is finalized.
+    </div>
+
+    <!-- API REFERENCE -->
+    <h2 id="api-ref">Full API Reference</h2>
+    <table>
+        <tr><th>Module</th><th>Status</th><th>Description</th></tr>
+        <tr><td><code>ideamaxfx.core</code></td><td>Planned</td><td>Pipeline engine, base classes</td></tr>
+        <tr><td><code>ideamaxfx.color</code></td><td>Planned</td><td>Color manipulation utilities</td></tr>
+        <tr><td><code>ideamaxfx.transform</code></td><td>Planned</td><td>Geometric transformations</td></tr>
+        <tr><td><code>ideamaxfx.io</code></td><td>Planned</td><td>File import/export, batch ops</td></tr>
+        <tr><td><code>ideamaxfx.utils</code></td><td>Planned</td><td>Helpers and validators</td></tr>
+    </table>
+
+    <!-- CONFIG -->
+    <h2 id="config">Configuration</h2>
+    <p>The library can be configured via a <code>.env</code> file or programmatically:</p>
+    <pre><code><span class="kw">import</span> ideamaxfx <span class="kw">as</span> fx
+
+fx.config.set(
+    log_level=<span class="str">"debug"</span>,
+    output_format=<span class="str">"webp"</span>,
+    quality=<span class="num">90</span>,
+)</code></pre>
+
+    <!-- CHANGELOG -->
+    <h2 id="changelog">Changelog</h2>
+    <h3>v0.1.0-dev — 2026-02-25</h3>
+    <ul>
+        <li>Project initialized</li>
+        <li>Folder structure and documentation scaffolding</li>
+        <li>Awaiting detailed instructions for module development</li>
+    </ul>
+
+    <!-- CONTRIBUTING -->
+    <h2 id="contributing">Contributing</h2>
+    <ol>
+        <li>Fork the repository</li>
+        <li>Create a feature branch: <code>git checkout -b feature/my-feature</code></li>
+        <li>Write tests for your changes</li>
+        <li>Submit a Pull Request</li>
+    </ol>
+
+    <!-- LICENSE -->
+    <h2 id="license">License</h2>
+    <p>MIT License — free for commercial and personal use. See <code>LICENSE</code> file for full text.</p>
+</div>
+
+<script>
+(function() {
+    const links = document.querySelectorAll('.nav-link');
+    const targets = [];
+    links.forEach(link => {
+        const id = (link.getAttribute('href') || '').replace('#', '');
+        const el = id ? document.getElementById(id) : null;
+        if (el) targets.push({ el, link });
+    });
+    function update() {
+        let active = targets[0];
+        for (const t of targets) {
+            if (window.scrollY >= t.el.offsetTop - 120) active = t;
+        }
+        links.forEach(l => l.classList.remove('active'));
+        if (active) active.link.classList.add('active');
+    }
+    window.addEventListener('scroll', update);
+    update();
+})();
+</script>
+</body>
+</html>

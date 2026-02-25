@@ -1,0 +1,57 @@
+# Byte-compiled / optimized
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+*.egg
+.eggs/
+sdist/
+wheels/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+coverage.xml
+*.cover
+
+# Type checking
+.mypy_cache/
+.dmypy.json
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Ruff
+.ruff_cache/
+
+# Output artifacts
+examples/output/
+examples/animated.gif
+examples/finished.png
+
+# Logs
+logs/
+*.log
+
+# Environment
+.env
+.env.local
