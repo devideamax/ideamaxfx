@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.1.2 (2026-02-25)
+
+### Fixed
+- **Radar ring labels** — opaque background behind ring value numbers for readability over polygon fill.
+- **Pie label auto-contrast** — text color now adapts per-sector based on luminance (light text on dark sectors, dark text on light sectors).
+- **Scatter/Line axis labels** — `x_label` and `y_label` now render correctly with proper margin adjustments; Y-axis label is rotated 90°.
+
+### Added
+- `draw_axis_labels()` utility in `chart_utils` for reusable X/Y axis label rendering.
+- `x_label` and `y_label` parameters on `line_draw()` and `scatter_fade()`.
+
 ## 0.1.1 (2026-02-25)
 
 ### Added

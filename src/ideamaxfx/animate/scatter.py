@@ -10,6 +10,7 @@ from ideamaxfx.animate.chart_utils import (
     _SS,
     compute_margins,
     compute_nice_ticks,
+    draw_axis_labels,
     draw_gridlines,
     draw_title,
     draw_x_axis,
@@ -98,6 +99,10 @@ def scatter_fade(
     margins = compute_margins(
         tmp_draw, y_labels_str, x_labels_str, title, subtitle, False, S, font_path
     )
+    if x_label:
+        margins["bottom"] += 18 * S
+    if y_label:
+        margins["left"] += 18 * S
 
     margin_left = margins["left"]
     margin_right = margins["right"]
@@ -133,6 +138,10 @@ def scatter_fade(
         draw_y_axis(draw, y_ticks, chart_area, y_min, y_max, S, font_path)
         x_positions = [_to_pixel(t, y_min)[0] for t in x_ticks]
         draw_x_axis(draw, x_labels_str, x_positions, chart_area, S, font_path)
+
+        # Axis labels
+        if x_label or y_label:
+            draw_axis_labels(draw, x_label, y_label, chart_area, width * S, S, font_path)
 
         # Points appear progressively
         visible = max(0, int(n * progress))

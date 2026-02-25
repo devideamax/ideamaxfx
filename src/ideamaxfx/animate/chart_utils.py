@@ -268,6 +268,40 @@ def draw_x_axis(
         draw.text((px - lw // 2, bottom + 6 * S), lbl, fill=COLOR_TEXT_MUTED, font=font)
 
 
+def draw_axis_labels(
+    draw: ImageDraw.ImageDraw,
+    x_label: str,
+    y_label: str,
+    chart_area: dict[str, int],
+    canvas_width: int,
+    S: int,
+    font_path: str | None,
+) -> None:
+    """Draw axis title labels (e.g. 'Revenue' on Y, 'Month' on X)."""
+    font = load_font(size=FONT_AXIS * S, path=font_path)
+    if x_label:
+        bbox = draw.textbbox((0, 0), x_label, font=font)
+        lw = bbox[2] - bbox[0]
+        x = (chart_area["left"] + chart_area["right_x"] - lw) // 2
+        y = chart_area["bottom"] + 22 * S
+        draw.text((x, y), x_label, fill=COLOR_TEXT_MUTED, font=font)
+    if y_label:
+        bbox = draw.textbbox((0, 0), y_label, font=font)
+        lw = bbox[2] - bbox[0]
+        lh = bbox[3] - bbox[1]
+        # Rotate: draw on temp image, paste rotated
+        from PIL import Image as _Image
+
+        tmp = _Image.new("RGBA", (lw + 4, lh + 4), (0, 0, 0, 0))
+        tmp_draw = ImageDraw.Draw(tmp)
+        tmp_draw.text((2, 2), y_label, fill=(*COLOR_TEXT_MUTED, 255), font=font)
+        rotated = tmp.rotate(90, expand=True)
+        x = chart_area["left"] - 40 * S
+        y = (chart_area["top"] + chart_area["bottom"] - rotated.height) // 2
+        # Composite onto main image (need access to img, so we paste via draw's im)
+        draw._image.paste(rotated, (max(0, x), y), rotated)
+
+
 def draw_gridlines(
     draw: ImageDraw.ImageDraw,
     ticks: list[float],

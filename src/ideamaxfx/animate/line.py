@@ -10,6 +10,7 @@ from ideamaxfx.animate.chart_utils import (
     _SS,
     compute_margins,
     compute_nice_ticks,
+    draw_axis_labels,
     draw_gridlines,
     draw_legend,
     draw_title,
@@ -124,6 +125,10 @@ def line_draw(
     )
     if has_legend:
         margins["bottom"] += 20 * S  # space for legend below
+    if x_label:
+        margins["bottom"] += 18 * S
+    if y_label:
+        margins["left"] += 18 * S
 
     margin_left = margins["left"]
     margin_right = margins["right"]
@@ -164,6 +169,10 @@ def line_draw(
         # X-axis
         x_positions = [_to_pixel(t, y_min)[0] for t in x_ticks]
         draw_x_axis(draw, x_labels_str, x_positions, chart_area, S, font_path)
+
+        # Axis labels
+        if x_label or y_label:
+            draw_axis_labels(draw, x_label, y_label, chart_area, width * S, S, font_path)
 
         # Draw each series
         visible_points = max(1, int(n_points * progress))

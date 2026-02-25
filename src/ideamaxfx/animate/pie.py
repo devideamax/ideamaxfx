@@ -162,9 +162,12 @@ def pie_fill(
                 lx = cx + int(label_r * math.cos(math.radians(mid_angle)))
                 ly = cy + int(label_r * math.sin(math.radians(mid_angle)))
 
-                # Blend text color with alpha
+                # Auto-contrast: pick light or dark text based on sector color
+                sc = parsed_colors[i]
+                luminance = 0.299 * sc[0] + 0.587 * sc[1] + 0.114 * sc[2]
+                base_color = (255, 255, 255) if luminance < 128 else (20, 20, 20)
                 blended = tuple(
-                    int(bg_color[c] + (text_color[c] - bg_color[c]) * label_alpha)
+                    int(bg_color[c] + (base_color[c] - bg_color[c]) * label_alpha)
                     for c in range(3)
                 )
 

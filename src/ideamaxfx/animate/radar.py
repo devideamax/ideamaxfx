@@ -110,16 +110,23 @@ def radar_sweep(
             pts.append(pts[0])
             draw.line(pts, fill=grid_color, width=max(1, S))
 
-            # Ring value labels near 12-o'clock axis
+            # Ring value labels near 12-o'clock axis with opaque background
             if show_ring_values:
                 ring_val = max_value * ring / ring_count
                 label = format_number(ring_val)
-                # Position slightly offset from the vertical axis
-                lx = cx + 6 * S
-                ly = int(cy - ring_r) - 2 * S
+                lx = cx + 10 * S
+                ly = int(cy - ring_r)
                 bbox = draw.textbbox((0, 0), label, font=ring_font)
+                lw = bbox[2] - bbox[0]
                 lh = bbox[3] - bbox[1]
-                draw.text((lx, ly - lh // 2), label, fill=COLOR_TEXT_MUTED, font=ring_font)
+                tx = lx
+                ty = ly - lh // 2
+                pad = 3 * S
+                draw.rectangle(
+                    [tx - pad, ty - pad, tx + lw + pad, ty + lh + pad],
+                    fill=(*bg_color, 255),
+                )
+                draw.text((tx, ty), label, fill=COLOR_TEXT_MUTED, font=ring_font)
 
         # Axis lines
         for a in angles:

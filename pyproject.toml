@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ideamaxfx"
-version = "0.1.1"
+version = "0.1.2"
 description = "Post-production effects, animated build-up, and visual toolkit for data visualizations"
 readme = "README.md"
 license = {text = "MIT"}
